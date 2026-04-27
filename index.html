@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>초간단 밈 생성기 v2</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+        background: #f4f4f9;
+        padding: 20px;
+      }
+      .controls {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        display: inline-block;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      input[type='text'] {
+        padding: 10px;
+        width: 200px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin: 5px;
+      }
+      button {
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      canvas {
+        border: 5px solid white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        max-width: 90vw;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🖼️ 나만의 밈 메이커</h2>
+
+    <div class="controls">
+      <input type="file" id="imageInput" accept="image/*" /><br />
+      <input type="text" id="topText" placeholder="상단 문구" />
+      <input type="text" id="bottomText" placeholder="하단 문구" />
+      <button onclick="downloadMeme()">이미지 저장</button>
+    </div>
+
+    <br />
+    <canvas id="memeCanvas"></canvas>
+
+    <script>
+      const canvas = document.getElementById('memeCanvas');
+      const ctx = canvas.getContext('2d');
+      const imageInput = document.getElementById('imageInput');
+      const topTextInput = document.getElementById('topText');
+      const bottomTextInput = document.getElementById('bottomText');
+
+      let imgElement = null;
+
+      imageInput.addEventListener('change', function (e) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          imgElement = new Image();
+          imgElement.onload = function () {
+            drawMeme(); // 이미지가 로드되면 그리기 시작
+          };
+          imgElement.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+      });
+
+      // 텍스트 입력 시마다 호출
+      [topTextInput, bottomTextInput].forEach((el) => {
+        el.addEventListener('input', drawMeme);
+      });
+
+      function drawMeme() {
+        if (!imgElement) return;
+
+        // 1. 캔버스 크기를 이미지에 맞춤
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+
+        // 2. 이미지 먼저 그리기
+        ctx.drawImage(imgElement, 0, 0);
+
+        // 3. 텍스트 스타일 설정 (검은색 테두리 + 흰색 글씨)
+        const fontSize = Math.floor(canvas.height * 0.1);
+        ctx.font = `bold ${fontSize}px sans-serif`; // 폰트가 없으면 기본 sans-serif
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // 텍스트 그리기 함수
+        renderText(topTextInput.value, canvas.width / 2, fontSize);
+        renderText(
+          bottomTextInput.value,
+          canvas.width / 2,
+          canvas.height - fontSize,
+        );
+      }
+
+      function renderText(text, x, y) {
+        if (!text) return;
+
+        // 가독성을 위한 두꺼운 검은색 테두리
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 8;
+        ctx.strokeText(text, x, y);
+
+        // 흰색 본문 글씨
+        ctx.fillStyle = 'white';
+        ctx.fillText(text, x, y);
+      }
+
+      function downloadMeme() {
+        const link = document.createElement('a');
+        link.download = 'my-meme.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+    </script>
+  </body>
+</html>
